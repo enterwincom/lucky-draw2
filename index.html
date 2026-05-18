@@ -1,0 +1,369 @@
+<!-- 
+***********************************************************
+* PROJECT    : 2026 Smart Lucky Draw - Layout Harmonized
+* UPGRADE    : Result Card Matches History Width & Style
+* VERSION    : 2.0.0
+***********************************************************
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lucky Draw Pro v2.0</title>
+    <style>
+        :root {
+            --primary: #4caf50; --secondary: #2196f3; --danger: #ff5252;
+            --info: #00bcd4; --gold: #ffd700; --silver: #e2e8f0; --bronze: #ff9d6c;
+            --bg-dark: #0f172a; --bg-card: rgba(30, 41, 59, 0.9);
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Pretendard', -apple-system, sans-serif;
+            margin: 0; background: radial-gradient(circle at center, #1e293b 0%, #080c14 100%);
+            color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+            padding: 15px; overflow-x: hidden;
+        }
+        h2 { margin: 15px 0; font-size: clamp(24px, 8vw, 36px); font-weight: 900; text-align: center; }
+        
+        .container, #resultDisplay, .history-section {
+            width: 100%; max-width: 500px;
+        }
+
+        .container {
+            background: var(--bg-card); backdrop-filter: blur(20px); padding: 20px; border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+
+        .info-badge {
+            background: #334155; padding: 6px 14px; border-radius: 50px;
+            font-size: 13px; margin-bottom: 15px; display: inline-block; font-weight: 700;
+        }
+
+        .form-row { display: flex; flex-direction: column; margin-bottom: 12px; gap: 6px; }
+        .range-inputs { display: flex; align-items: center; gap: 8px; width: 100%; }
+        
+        label { font-weight: 700; font-size: 15px; color: #cbd5e1; }
+        input {
+            background: #080c14; border: 2px solid #334155; border-radius: 12px;
+            padding: 10px; color: #fff; font-size: 16px; font-weight: bold; text-align: center; width: 100%;
+        }
+
+        .rank-setup-area { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; margin-top: 5px; }
+        .rank-input-group { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
+        .rank-input-group input:first-child { flex: 2; }
+        .rank-input-group input:nth-child(2) { flex: 1; }
+        .remove-btn { width: 40px; height: 40px; background: var(--danger); border: none; border-radius: 10px; color: white; cursor: pointer; font-weight: bold; }
+
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+        .btn-group button:first-child { grid-column: span 2; height: 55px; font-size: 18px; }
+        
+        button {
+            padding: 12px; font-size: 14px; font-weight: 800; cursor: pointer;
+            border: none; border-radius: 14px; transition: all 0.2s; color: white;
+        }
+        button.draw { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        button.util { background: #475569; }
+        button.reset { background: #64748b; }
+        button:active { transform: scale(0.96); }
+
+        /* 결과 카드 디자인 (히스토리 박스와 일치하도록 전면 수정) */
+        .result-card {
+            background: rgba(255, 255, 255, 0.07); padding: 15px; border-radius: 20px;
+            margin-bottom: 12px; animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .result-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+        }
+        .result-title { font-size: 17px; font-weight: 800; color: var(--secondary); }
+
+        /* 번호 그리드 및 칩 스타일 통일 (히스토리와 1:1 매칭) */
+        .winner-grid, .history-winners-grid {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px;
+        }
+        .winner-number, .history-num-chip {
+            background: rgba(255,255,255,0.1); border-radius: 6px; text-align: center; 
+            padding: 5px 0; font-weight: bold; font-size: 14px; color: #fff;
+        }
+
+        /* 팝업 내부 칩 스타일 */
+        .popup-winner-grid {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; 
+            margin: 25px auto; width: 100%; max-width: 440px;
+        }
+        .popup-num-chip {
+            background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 12px; text-align: center; padding: 12px 0;
+            color: white; font-size: clamp(20px, 6vw, 32px); font-weight: 900;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
+
+        /* 히스토리 섹션 */
+        .history-section { margin-top: 10px; }
+        .history-title-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 5px; }
+        .history-title-bar h3 { font-size: 18px; color: #94a3b8; margin: 0; }
+        
+        button.export { background: var(--info); padding: 6px 12px; font-size: 13px; border-radius: 10px; }
+
+        .history-item { 
+            background: rgba(255, 255, 255, 0.07); margin-bottom: 10px;
+            padding: 15px; border-radius: 20px;
+        }
+        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .history-rank { font-size: 17px; font-weight: 800; }
+        .history-time { font-size: 12px; color: #64748b; }
+
+        .rank-gold { color: var(--gold); } .rank-silver { color: var(--silver); } .rank-bronze { color: var(--bronze); }
+
+        #popup {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.96); display: none; align-items: center;
+            justify-content: center; z-index: 10000; padding: 20px;
+        }
+    </style>
+</head>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+<h2>✨ 행운권 추첨</h2>
+
+<div class="container">
+    <div style="text-align: center;"><div class="info-badge">남은 번호: <span id="remainCount" style="color:var(--gold)">0</span>개</div></div>
+    
+    <div class="form-row">
+        <label>🔢 번호 범위</label>
+        <div class="range-inputs">
+            <input type="number" id="start" value="1" oninput="updatePoolInfo()" pattern="\d*">
+            <span>~</span>
+            <input type="number" id="end" value="100" oninput="updatePoolInfo()" pattern="\d*">
+        </div>
+    </div>
+
+    <div class="rank-setup-area" id="rankInputs">
+        <div class="rank-input-group">
+            <input type="text" placeholder="예: 1등" value="1등">
+            <input type="number" placeholder="명" value="1" pattern="\d*">
+            <button onclick="removeRank(this)" class="remove-btn">✕</button>
+        </div>
+    </div>
+    
+    <button onclick="addRank()" style="width:100%; background:none; border:2px dashed #475569; color:#94a3b8; margin-top:10px; padding:8px; border-radius: 12px; font-size: 13px;">+ 등수 추가</button>
+
+    <div class="btn-group">
+        <button id="btnDraw" class="draw" onclick="startDraw()">🎰 추첨 시작</button>
+        <button class="util" onclick="toggleFullscreen()">🖥 전체화면</button>
+        <button class="reset" onclick="clearAll()">🧹 초기화</button>
+    </div>
+</div>
+
+<!-- 결과 디스플레이 폭이 전체 컨테이너와 연동됩니다 -->
+<div id="resultDisplay"></div>
+
+<div class="history-section">
+    <div class="history-title-bar">
+        <h3>📋 당첨 히스토리</h3>
+        <button class="export" onclick="exportToCSV()">📊 저장(CSV)</button>
+    </div>
+    <div id="history">기록이 없습니다.</div>
+</div>
+
+<div id="popup" onclick="closePopup()">
+    <div id="popupContent" style="text-align: center; width: 100%;"></div>
+</div>
+<br><br>
+<footer>© 2026 Lucky Draw All rights reserved.</footer>
+
+<script>
+let usedNumbers = [];
+let historyLog = [];
+let audioCtx;
+
+function initAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playSound(freq, duration, type='sine') {
+    try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + duration);
+    } catch(e) {}
+}
+
+function addRank() {
+    const div = document.createElement('div');
+    div.className = 'rank-input-group';
+    div.innerHTML = `<input type="text" placeholder="등수 이름" value="추가 등수"><input type="number" placeholder="명" value="1" pattern="\\d*"><button onclick="removeRank(this)" class="remove-btn">✕</button>`;
+    document.getElementById('rankInputs').appendChild(div);
+}
+
+function removeRank(btn) { btn.parentElement.remove(); }
+
+function updatePoolInfo() {
+    const s = +document.getElementById('start').value;
+    const e = +document.getElementById('end').value;
+    const total = Math.max(0, e - s + 1);
+    document.getElementById('remainCount').innerText = Math.max(0, total - usedNumbers.length);
+}
+
+async function startDraw() {
+    const s = +document.getElementById('start').value;
+    const e = +document.getElementById('end').value;
+    const rankGroups = document.querySelectorAll('.rank-input-group');
+    
+    let available = [];
+    for(let i=s; i<=e; i++) if(!usedNumbers.includes(i)) available.push(i);
+
+    let drawTasks = [];
+    let totalNeeded = 0;
+    rankGroups.forEach(group => {
+        const name = group.querySelectorAll('input')[0].value;
+        const count = +group.querySelectorAll('input')[1].value;
+        if(count > 0) { drawTasks.push({ name, count }); totalNeeded += count; }
+    });
+
+    if(totalNeeded === 0) return alert("추첨 인원을 설정해주세요.");
+    if(totalNeeded > available.length) return alert("남은 번호가 부족합니다!");
+
+    document.getElementById('btnDraw').disabled = true;
+    document.getElementById('resultDisplay').innerHTML = "";
+
+    for(const task of drawTasks) {
+        await performDraw(task, available);
+    }
+    document.getElementById('btnDraw').disabled = false;
+    saveData();
+}
+
+async function performDraw(task, pool) {
+    let winners = [];
+    for(let i=0; i<task.count; i++) {
+        const idx = Math.floor(Math.random() * pool.length);
+        winners.push(pool.splice(idx, 1)[0]);
+    }
+    winners.sort((a,b) => a-b);
+    usedNumbers.push(...winners);
+
+    // 1. 추첨 결과 카드 생성 (히스토리 구조와 동일하게 마크업 및 그리드 간격 적용)
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    
+    let rankClass = task.name.includes("1등") ? "rank-gold" : task.name.includes("2등") ? "rank-silver" : task.name.includes("3등") ? "rank-bronze" : "";
+    let gridHtml = winners.map(n => `<div class="winner-number">${n}</div>`).join('');
+    
+    card.innerHTML = `
+        <div class="result-header">
+            <span class="result-title ${rankClass}">🎯 ${task.name} 추첨 결과</span>
+            <span style="font-size: 12px; color: #64748b;">방금 전</span>
+        </div>
+        <div class="winner-grid">${gridHtml}</div>
+    `;
+    document.getElementById('resultDisplay').prepend(card);
+
+    // 2. 당첨 팝업 실행 (1초 간격 순차 표시)
+    await showPopupSequentially(task.name, winners);
+    
+    historyLog.unshift({ 
+        time: new Date().toLocaleTimeString(), 
+        rank: task.name, 
+        winners: winners 
+    });
+    renderHistory();
+    updatePoolInfo();
+}
+
+async function showPopupSequentially(name, winners) {
+    return new Promise(async (resolve) => {
+        const p = document.getElementById('popup');
+        const pc = document.getElementById('popupContent');
+        
+        pc.innerHTML = `
+            <div style="font-size:clamp(26px, 6vw, 38px); color:var(--gold); font-weight:900;">🎉 ${name} 당첨 🎉</div>
+            <div class="popup-winner-grid" id="popGrid"></div>
+            <div id="closeGuide" style="color:#64748b; margin-top:40px; font-size:15px; visibility:hidden;">화면을 터치하여 닫기</div>
+        `;
+        p.style.display = 'flex';
+        const grid = document.getElementById('popGrid');
+
+        for(let i=0; i<winners.length; i++) {
+            const chip = document.createElement('div');
+            chip.className = 'popup-num-chip';
+            chip.innerText = winners[i];
+            grid.appendChild(chip);
+            
+            playSound(523 + (i * 40), 0.25, 'triangle');
+            
+            if(i < winners.length - 1) {
+                await new Promise(r => setTimeout(r, 1000));
+            }
+        }
+
+        document.getElementById('closeGuide').style.visibility = 'visible';
+        window.closePopup = () => { p.style.display = 'none'; resolve(); };
+    });
+}
+
+function renderHistory() {
+    const h = document.getElementById('history');
+    if(historyLog.length === 0) { h.innerText = "기록이 없습니다."; return; }
+    h.innerHTML = historyLog.map(item => {
+        let rankClass = item.rank.includes("1등") ? "rank-gold" : item.rank.includes("2등") ? "rank-silver" : item.rank.includes("3등") ? "rank-bronze" : "";
+        const winnersArr = item.winners;
+        let gridHtml = `<div class="history-winners-grid">` + winnersArr.map(num => `<div class="history-num-chip">${num}</div>`).join('') + `</div>`;
+
+        return `
+            <div class="history-item">
+                <div class="history-header">
+                    <span class="history-rank ${rankClass}">${item.rank}</span>
+                    <span class="history-time">${item.time}</span>
+                </div>
+                ${gridHtml}
+            </div>
+        `;
+    }).join('');
+}
+
+function exportToCSV() {
+    if (historyLog.length === 0) return alert("기록이 없습니다.");
+    let csv = "\uFEFF시간,등수,당첨번호\n";
+    historyLog.forEach(item => { 
+        csv += `"${item.time}","${item.rank}","${item.winners.join(' ')}"\n`; 
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `당첨기록_${new Date().toLocaleDateString()}.csv`;
+    a.click();
+}
+
+function saveData() {
+    localStorage.setItem('draw_used_v2_0', JSON.stringify(usedNumbers));
+    localStorage.setItem('draw_hist_v2_0', JSON.stringify(historyLog));
+}
+
+function clearAll() {
+    if(confirm("모든 데이터를 초기화할까요?")) { localStorage.clear(); location.reload(); }
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+}
+
+window.onload = () => {
+    usedNumbers = JSON.parse(localStorage.getItem('draw_used_v2_0') || "[]");
+    historyLog = JSON.parse(localStorage.getItem('draw_hist_v2_0') || "[]");
+    updatePoolInfo(); renderHistory();
+};
+</script>
+</body>
+</html>
